@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E-commerce Search</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        input[type="text"], select {
+            padding: 10px;
+            margin: 5px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .results, .analytics, .assistant {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+        }
+        .results div {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <h1>E-commerce Search</h1>
+    <form method="POST">
+        <label for="brands">Select Brands:</label><br>
+        <select name="brands" id="brands" multiple>
+            <option value="https://example-brand1.com">Brand 1</option>
+            <option value="https://example-brand2.com">Brand 2</option>
+            <option value="https://example-brand3.com">Brand 3</option>
+        </select><br>
+        <label for="category">Category:</label><br>
+        <select name="category" id="category">
+            <option value="">All</option>
+            <option value="electronics">Electronics</option>
+            <option value="clothing">Clothing</option>
+            <option value="books">Books</option>
+        </select><br>
+        <label for="collection">Collection:</label><br>
+        <select name="collection" id="collection">
+            <option value="">All</option>
+            <option value="new_arrivals">New Arrivals</option>
+            <option value="sale">Sale</option>
+            <option value="featured">Featured</option>
+        </select><br>
+        <input type="text" name="query" placeholder="Enter your search query"><br>
+        <button type="submit">Search</button><br><br>
+        <label for="assistant_input">Ask the AI Assistant:</label><br>
+        <input type="text" name="assistant_input" id="assistant_input" placeholder="Ask me anything..."><br>
+        <button type="submit">Send</button>
+    </form>
+    <div class="results">
+        {% for result in results %}
+            <div>
+                <strong>{{ result.title }}</strong>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="analytics">
+        <h2>Analytics</h2>
+        <p>Total Searches: {{ search_counts }}</p>
+        <p>Click-Through Rate: {{ click_through_rate }}</p>
+        <h3>Top Searches:</h3>
+        <ul>
+            {% for query, count in top_searches %}
+                <li>{{ query }}: {{ count }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% if assistant_response %}
+        <div class="assistant">
+            <h2>AI Assistant</h2>
+            <p>{{ assistant_response }}</p>
+        </div>
+    {% endif %}
+</body>
+</html>

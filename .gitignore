@@ -1,0 +1,21 @@
+# Virtual environment
+env/
+
+# Qdrant local database files
+qdrant_data/
+
+# Model checkpoints & embeddings
+fine_tuned_bert_triplet.pt
+product_embeddings.npy
+product_embeddings.pkl
+query_embeddings.py
+
+# Pickle and cache files
+*.pkl
+*.npy
+
+
+# Python compiled & cache files
+__pycache__/
+*.pyc
+*.pyo
