@@ -37,7 +37,7 @@ def encode_title(title, model, tokenizer):
         title,
         padding='max_length',
         truncation=True,
-        max_length=64,
+        max_length=64, 
         return_tensors='pt'
     )
     input_ids = inputs['input_ids'].to(device)

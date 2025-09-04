@@ -12,6 +12,14 @@ from bs4 import BeautifulSoup
 import time
 import random
 
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
 class VectorSearchService:
     def __init__(self, model_path="fine_tuned_bert_triplet.pt", qdrant_path="./qdrant_data"):
         # Initialize tokenizer
@@ -325,41 +333,52 @@ def main():
                     my_bar = st.progress(0, text=progress_text)
                     
                     products = []
-                    for page in range(1, max_pages + 1):
-                        st.write(f"Processing page {page} for '{query}'...")
-                        url = f"https://www.ebay.com/sch/i.html?_nkw={query.replace(' ', '+')}&_pgn={page}"
-                        
-                        try:
-                            response = scraper.session.get(url, headers=scraper.headers)
-                            soup = BeautifulSoup(response.text, 'html.parser')
-                            
-                            # Find all product listings (simplified for brevity)
-                            listings = soup.select('.s-item__info')
-                            
-                            for listing in listings:
-                                # Skip the first result which is often promotional
-                                if "Shop on eBay" in listing.text:
-                                    continue
-                                
-                                title_elem = listing.select_one('.s-item__title')
-                                price_elem = listing.select_one('.s-item__price')
-                                link_elem = listing.select_one('a.s-item__link')
-                                
-                                if title_elem and price_elem and link_elem:
-                                    products.append({
-                                        'title': title_elem.text.strip(),
-                                        'price': price_elem.text.strip(),
-                                        'link': link_elem.get('href'),
-                                        'search_query': query
-                                    })
-                            
-                            my_bar.progress((page / max_pages), text=f"Page {page}/{max_pages} for '{query}'")
-                            time.sleep(random.uniform(1, 2))  # Shorter delay for demo
-                            
-                        except Exception as e:
-                            st.error(f"Error on page {page} for '{query}': {str(e)}")
-                            break
+
+                    # --- SELENIUM SETUP ---
+                    # This sets up a Chrome browser instance that Selenium will control
+                    options = webdriver.ChromeOptions()
+                    options.add_argument('--headless')  # Run Chrome in the background without a UI
+                    options.add_argument('--no-sandbox')
+                    options.add_argument('--disable-dev-shm-usage')
+                    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36")
                     
+                    try:
+                        # Use a context manager to ensure the browser closes properly
+                        with webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options) as driver:
+                            for page in range(1, max_pages + 1):
+                                st.write(f"Processing page {page} for '{query}' using Selenium...")
+                                url = f"https://www.ebay.com/sch/i.html?_nkw={query.replace(' ', '+')}&_pgn={page}"
+                                driver.get(url)
+
+                                # --- WAIT FOR THE CONTENT TO LOAD ---
+                                # This is the most important step. We wait up to 10 seconds for the
+                                # product listings (li.s-item) to become visible on the page.
+                                WebDriverWait(driver, 10).until(
+                                    EC.presence_of_element_located((By.CSS_SELECTOR, "li.s-item"))
+                                )
+
+                                # Now that the page is fully loaded, get the HTML and parse it
+                                soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+                                listings = soup.select('li.s-item')
+                                for listing in listings:
+                                    title_elem = listing.select_one('.s-item__title')
+                                    price_elem = listing.select_one('.s-item__price')
+                                    link_elem = listing.select_one('a.s-item__link')
+
+                                    if title_elem and price_elem and link_elem and "Shop on eBay" not in title_elem.text:
+                                        products.append({
+                                            'title': title_elem.text.strip(),
+                                            'price': price_elem.text.strip(),
+                                            'link': link_elem.get('href'),
+                                            'search_query': query
+                                        })
+                                
+                                my_bar.progress((page / max_pages), text=f"Page {page}/{max_pages} for '{query}'")
+
+                    except Exception as e:
+                        st.error(f"A Selenium error occurred for '{query}': {str(e)}")
+
                     my_bar.progress(1.0, text=f"Completed '{query}': Found {len(products)} products")
                     return products
                 
