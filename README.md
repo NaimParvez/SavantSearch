@@ -209,7 +209,7 @@ python -m pytest tests/
 
 ### Additional Libraries
 
-- **BeautifulSoup4**: Web scraping
+- **Selenium**: Web scraping
 - **Requests**: HTTP requests
 - **Scikit-learn**: Machine learning utilities
 - **tqdm**: Progress bars
